@@ -4,3 +4,4 @@ services:
     volumes:
       - ./etl:/app
       - ./data:/app/data
+    command: sleep infinity
