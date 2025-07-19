@@ -5,7 +5,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-endpoint = "https://pokemondb.net/pokedex/unown"
+endpoint = "https://pokemondb.net/pokedex/vulpix"
 
 def fetch_html(url):
     try:
@@ -27,7 +27,7 @@ def parse_pokemon_data(html):
     location_data = get_location_info(soup)
     generation = get_generation(dex_number)
 
-    return pokemon_sprites
+    return location_data
 
 def get_name(soup):
     selector = '#main h1'
@@ -137,8 +137,12 @@ def get_location_info(soup):
 
         if location_cell:
             location_links = location_cell.find_all('a')
+            cell_text = location_cell.get_text(strip=True)
+            print(cell_text)
 
-            if location_links:
+            if "Evolve" in cell_text:
+                location_info = cell_text
+            elif location_links:
                 location_urls = []
                 for link in location_links:
                     url = link['href']
