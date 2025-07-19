@@ -1,11 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
-from constants import VERSION_TO_GENERATION
+from constants import GENERATION_BOUNDARIES
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-endpoint = "https://pokemondb.net/pokedex/bulbasaur"
+endpoint = "https://pokemondb.net/pokedex/unown"
 
 def fetch_html(url):
     try:
@@ -25,10 +25,9 @@ def parse_pokemon_data(html):
     pokemon_types = get_typing(soup)
     pokemon_sprites = get_sprites(soup)
     location_data = get_location_info(soup)
+    generation = get_generation(dex_number)
 
-    # TODO generation = get_generation(dex_number)
-
-    return location_data
+    return pokemon_sprites
 
 def get_name(soup):
     selector = '#main h1'
@@ -74,18 +73,44 @@ def get_sprites(soup):
     
     sprite_soup = BeautifulSoup(sprite_page_html, 'html.parser')
 
-    sprite_sources = []
+    sprites_data = {}
     home_label_cell = sprite_soup.find('td', string=lambda text: text and 'Home' in text)
     
     if home_label_cell:
         sibling_cells = home_label_cell.find_next_siblings('td')
     
         for cell in sibling_cells:
-            image_tag = cell.select_one('a > img')
-            if image_tag:
-                sprite_sources.append(image_tag['src'])
+            image_tags = cell.select('a > img')
+            if image_tags:
+                for tag in image_tags:
+                    src = tag['src']
+                    form, sprite_type = parse_sprite_info(src)
+                    
+                    if form not in sprites_data:
+                        sprites_data[form] = {}
+                    
+                    sprites_data[form][sprite_type] = src
+
+    return sprites_data
+
+def parse_sprite_info(url):
+    filename = url.split('/')[-1]
     
-    return sprite_sources
+    name_part = filename.replace('.png', '')
+
+    sprite_type = "shiny" if "shiny" in url else "normal"
+    
+    parts = name_part.split('-')
+    
+    if len(parts) > 1:
+        form_name = parts[-1]
+        if form_name == 'f':
+            form_name = 'female'
+    else:
+        form_name = "default"
+        
+    return (form_name, sprite_type)
+
 
 def get_location_info(soup):
     location_heading = soup.find('h2', string=lambda text: text and 'Where to find' in text)
@@ -121,12 +146,24 @@ def get_location_info(soup):
 
                 location_info = location_urls
             else:
-                location_info = location_cell.get_text(strip=True)
+                location_text = location_cell.get_text(strip=True)
+                if location_text == 'Trade/migrate from another game':
+                    location_info = location_text
 
         for game in game_names:
             location_data[game] = location_info
     
     return location_data
+
+def get_generation(dex_number):
+    cleaned_dex_number = int(dex_number.lstrip('0'))
+
+    for gen, max_num in GENERATION_BOUNDARIES:
+        if cleaned_dex_number <= max_num:
+            return gen
+    
+    return None
+
 
 def main():
     logging.basicConfig(level=logging.INFO)
