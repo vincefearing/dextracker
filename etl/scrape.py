@@ -1,11 +1,13 @@
 import requests
+import json
+import os
+import time
 from bs4 import BeautifulSoup
 from constants import GENERATION_BOUNDARIES
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-endpoint = "https://pokemondb.net/pokedex/vulpix"
 
 def fetch_html(url):
     try:
@@ -17,13 +19,15 @@ def fetch_html(url):
         logger.error(f"Failed to fetch {url}. Reason: {e}")
         return None
     
-def parse_pokemon_data(html):
+def parse_pokemon_data(html, name):
+    if not html:
+        return None
+
     soup = BeautifulSoup(html, 'html.parser')
     
-    name = get_name(soup)
     dex_number = get_dex_number(soup)
     pokemon_types = get_typing(soup)
-    pokemon_sprites = get_sprites(soup)
+    pokemon_sprites = get_sprites(soup, name)
     location_data = get_location_info(soup)
     generation = get_generation(dex_number)
 
@@ -37,12 +41,6 @@ def parse_pokemon_data(html):
     }
 
     return pokemon_data
-
-def get_name(soup):
-    selector = '#main h1'
-    element = soup.select_one(selector)
-    if element:
-        return element.text
 
 def get_dex_number(soup):
     number_header = soup.find('th', string='National №')
@@ -66,7 +64,7 @@ def get_typing(soup):
     
     return pokemon_types
 
-def get_sprites(soup):
+def get_sprites(soup, name):
     sprite_page_link = soup.find('a', string=lambda t: t and 'See all' in t and 'sprites' in t)
     if not sprite_page_link:
         logger.error("Could not find the link to the sprites page.")
@@ -82,6 +80,9 @@ def get_sprites(soup):
     
     sprite_soup = BeautifulSoup(sprite_page_html, 'html.parser')
 
+    simple_name = name.replace('♀', '').replace('♂', '')
+    base_name = simple_name.lower().replace("'", "").replace(".", "").replace(":", "").replace(" ", "-")
+
     sprites_data = {}
     home_label_cell = sprite_soup.find('td', string=lambda text: text and 'Home' in text)
     
@@ -93,30 +94,31 @@ def get_sprites(soup):
             if image_tags:
                 for tag in image_tags:
                     src = tag['src']
-                    form, sprite_type = parse_sprite_info(src)
+
+                    high_res_url = src.replace('/1x/', '/')
+
+                    form, sprite_type = parse_sprite_info(high_res_url, base_name)
                     
                     if form not in sprites_data:
                         sprites_data[form] = {}
                     
-                    sprites_data[form][sprite_type] = src
+                    sprites_data[form][sprite_type] = high_res_url
 
     return sprites_data
 
-def parse_sprite_info(url):
+def parse_sprite_info(url, base_name):
     filename = url.split('/')[-1]
-    
     name_part = filename.replace('.png', '')
-
     sprite_type = "shiny" if "shiny" in url else "normal"
+    form_name = "default"
+
+    if len(name_part) > len(base_name):
+        form_name = name_part[len(base_name) + 1:]
     
-    parts = name_part.split('-')
-    
-    if len(parts) > 1:
-        form_name = parts[-1]
-        if form_name == 'f':
-            form_name = 'female'
-    else:
-        form_name = "default"
+    if form_name == 'f':
+        form_name = 'female'
+    elif form_name == 'm':
+        form_name = 'male'
         
     return (form_name, sprite_type)
 
@@ -127,48 +129,54 @@ def get_location_info(soup):
     if location_heading:
         location_table = location_heading.find_next('table')
 
-    row_list = location_table.find_all('tr')
-    
-    location_data = {}
-    for row in row_list:
-        game_names = []
-        game_header = row.find('th')
+        row_list = location_table.find_all('tr')
         
-        if game_header:
-            span_tags = game_header.find_all('span')
-            for span in span_tags:
-                name = span.get_text(strip=True)
-                game_names.append(name)
+        location_data = {}
+        for row in row_list:
+            game_names = []
+            game_header = row.find('th')
+            
+            if game_header:
+                span_tags = game_header.find_all('span')
+                for span in span_tags:
+                    name = span.get_text(strip=True)
+                    game_names.append(name)
+            
+            location_cell = row.find('td')
+
+            location_info = None
+
+            if location_cell:
+                location_links = location_cell.find_all('a')
+                cell_text = location_cell.get_text(separator=' ', strip=True)
+
+                if "Evolve" in cell_text:
+                    location_info = cell_text
+                elif 'Breed' in cell_text:
+                    location_info = cell_text
+                elif location_links:
+                    location_urls = []
+                    for link in location_links:
+                        url = link['href']
+                        location_urls.append(url)
+
+                    location_info = location_urls
+                else:
+                    location_text = location_cell.get_text(strip=True)
+                    if location_text == 'Trade/migrate from another game':
+                        location_info = location_text
+
+            for game in game_names:
+                location_data[game] = location_info
         
-        location_cell = row.find('td')
+        return location_data
 
-        location_info = None
-
-        if location_cell:
-            location_links = location_cell.find_all('a')
-            cell_text = location_cell.get_text(strip=True)
-            print(cell_text)
-
-            if "Evolve" in cell_text:
-                location_info = cell_text
-            elif location_links:
-                location_urls = []
-                for link in location_links:
-                    url = link['href']
-                    location_urls.append(url)
-
-                location_info = location_urls
-            else:
-                location_text = location_cell.get_text(strip=True)
-                if location_text == 'Trade/migrate from another game':
-                    location_info = location_text
-
-        for game in game_names:
-            location_data[game] = location_info
-    
-    return location_data
+    return {}
 
 def get_generation(dex_number):
+    if not dex_number:
+        return None
+
     cleaned_dex_number = int(dex_number.lstrip('0'))
 
     for gen, max_num in GENERATION_BOUNDARIES:
@@ -201,13 +209,40 @@ def get_master_pokemon_list():
     return pokemon_list
 
 
+def save_pokemon_data(data):
+    output_dir = 'data'
+    os.makedirs(output_dir, exist_ok=True)
+
+    pokemon_name = data['name']
+
+    file_name = f"{pokemon_name.lower().replace(' ', '-')}.json"
+    file_path = os.path.join(output_dir, file_name)
+
+    with open(file_path, 'w') as f:
+        json.dump(data, f, indent=4)
+
+    print(f"Successfully saved data to {file_path}")
+
 
 def main():
-    logging.basicConfig(level=logging.INFO)
     print("Starting the scraper...")
-    html = fetch_html(endpoint)
+
+    base_url = 'https://pokemondb.net'
+    master_list = get_master_pokemon_list()
     
-    print(get_master_pokemon_list())
+    for pokemon in master_list:
+        logger.info(f"Attempting to catch: {pokemon['name']}...")
+
+        full_url = f"{base_url}{pokemon['url']}"
+        html = fetch_html(full_url)
+
+        pokemon_data = parse_pokemon_data(html, pokemon['name'])
+
+        if pokemon_data:
+            save_pokemon_data(pokemon_data)
+
+        time.sleep(1)
+
 
 if __name__ == "__main__":
     main()
