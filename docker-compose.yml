@@ -5,3 +5,13 @@ services:
       - ./etl:/app
       - ./data:/app/data
     command: sleep infinity
+
+  api:
+    build: ./api
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api:/app
+      - ./data:/app/data:ro
+      - .:/workspaces:cached
+    command: sleep infinity
