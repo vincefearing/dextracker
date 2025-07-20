@@ -27,7 +27,16 @@ def parse_pokemon_data(html):
     location_data = get_location_info(soup)
     generation = get_generation(dex_number)
 
-    return location_data
+    pokemon_data = {
+        'name': name,
+        'dex_number': dex_number,
+        'pokemon_types': pokemon_types,
+        'pokemon_sprites': pokemon_sprites,
+        'generation': generation,
+        'location_data': location_data,
+    }
+
+    return pokemon_data
 
 def get_name(soup):
     selector = '#main h1'
@@ -168,12 +177,37 @@ def get_generation(dex_number):
     
     return None
 
+def get_master_pokemon_list():
+    endpoint = 'https://pokemondb.net/pokedex/all'
+    html = fetch_html(endpoint)
+    soup = BeautifulSoup(html, 'html.parser')
+
+    pokedex_table = soup.find('table', id='pokedex')
+    table_body = pokedex_table.find('tbody')
+    pokedex_rows = table_body.find_all('tr')
+    
+    pokemon_list = []
+    for row in pokedex_rows:
+        name_cell = row.find('td', class_='cell-name')
+        link_tag = name_cell.find('a')
+
+        pokemon_name = link_tag.get_text(strip=True)
+        partial_url = link_tag['href']
+
+        pokemon_list.append({
+            'name': pokemon_name,
+            'url': partial_url
+        })
+    return pokemon_list
+
+
 
 def main():
     logging.basicConfig(level=logging.INFO)
     print("Starting the scraper...")
     html = fetch_html(endpoint)
-    print(parse_pokemon_data(html))
+    
+    print(get_master_pokemon_list())
 
 if __name__ == "__main__":
     main()
