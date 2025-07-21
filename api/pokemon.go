@@ -11,5 +11,5 @@ type Pokemon struct {
 	Generation     int                      `json:"generation"`
 	PokemonTypes   []string                 `json:"pokemon_types"`
 	PokemonSprites map[string]SpriteDetails `json:"pokemon_sprites"`
-	LocationData   map[string][]string      `json:"location_data"`
+	LocationData   interface{}              `json:"location_data"`
 }

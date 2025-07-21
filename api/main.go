@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -13,5 +14,23 @@ func main() {
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "HELLO")
+	content, err := os.ReadFile("../data/abra.json")
+
+	if err != nil {
+		log.Printf("Failed to read file: %v", err)
+		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
+		return
+	}
+
+	var p Pokemon
+	err = json.Unmarshal(content, &p)
+
+	if err != nil {
+		log.Printf("Failed to unmarshal JSON: %v", err)
+		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(p)
 }
