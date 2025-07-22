@@ -1,0 +1,13 @@
+# Ignore version control files
+.git
+.gitignore
+
+# Ignore IDE and tool-specific files
+.vscode/
+.idea/
+
+# Ignore local environment files
+.env
+
+# Ignore the compiled binary (we build it inside the container)
+dextracker-api
