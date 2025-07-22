@@ -2,19 +2,24 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func main() {
-	http.HandleFunc("/", rootHandler)
+	http.HandleFunc("/pokemon/", rootHandler)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	content, err := os.ReadFile("../data/abra.json")
+	url := r.URL.Path
+	name := strings.TrimPrefix(url, "/pokemon/")
+	path := fmt.Sprintf("../data/%s.json", name)
+	content, err := os.ReadFile(path)
 
 	if err != nil {
 		log.Printf("Failed to read file: %v", err)
