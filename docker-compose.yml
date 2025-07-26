@@ -15,3 +15,19 @@ services:
       - ./data:/app/data:ro
       - .:/workspaces:cached
     command: sleep infinity
+  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - .:/workspaces:cached
+    depends_on:
+      - api
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api:8080
+    command: sleep infinity

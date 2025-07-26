@@ -1,0 +1,27 @@
+{
+    "name": "Dextracker Go API Dev",
+    // This path is now updated to go up two directories
+    "dockerComposeFile": [
+        "../../docker-compose.yml"
+    ],
+    // The rest of the file remains the same
+    "service": "api",
+    "workspaceFolder": "/workspaces/api",
+    "features": {
+        "ghcr.io/devcontainers/features/go:1": {
+            "version": "1.24"
+        },
+        "ghcr.io/devcontainers/features/git:1": {}
+    },
+    "forwardPorts": [
+        8080
+    ],
+    "postCreateCommand": "git config --global user.name 'Vincent Fearing' && git config --global user.email 'vincefearing@gmail.com' && go mod tidy",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go"
+            ]
+        }
+    }
+}
