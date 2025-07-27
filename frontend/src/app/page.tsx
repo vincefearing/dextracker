@@ -3,7 +3,7 @@ import {Pokemon} from '../types';
 
 async function getPokemonList(): Promise<Pokemon[]> {
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/pokemon`;
-  const res = await fetch(apiUrl);
+  const res = await fetch(apiUrl, { cache: 'no-store' });
 
   if (!res.ok) {
     throw new Error('Failed to fetch the Pokemon list from the API.');
