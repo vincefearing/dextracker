@@ -10,6 +10,14 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-brand-dark: #1E1E1E;
+  --color-brand-grey: #303036;
+  --color-brand-red: #E71D36;
+  --color-brand-light: #FFFFFF;
+  --color-brand-yellow: #FF9F1C;
+  --color-brand-blue: #3285F3;
+  --color-brand-border: #222226;
 }
 
 @media (prefers-color-scheme: dark) {
