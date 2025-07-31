@@ -13,11 +13,17 @@
 
   --color-brand-dark: #1E1E1E;
   --color-brand-grey: #303036;
+  --color-brand-grey-hl: #404046;
   --color-brand-red: #E71D36;
+  --color-brand-red-hl: #F03A50;
   --color-brand-light: #FFFFFF;
   --color-brand-yellow: #FF9F1C;
   --color-brand-blue: #3285F3;
+  --color-brand-blue-hl: #2EC4B6;
   --color-brand-border: #222226;
+  /* --color-brand-black: #050401; */
+  --color-brand-black: #111111;
+  --color-brand-black-hl: #131313;
 }
 
 @media (prefers-color-scheme: dark) {

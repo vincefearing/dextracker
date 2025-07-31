@@ -1,6 +1,7 @@
 import {Pokemon} from '../types';
 import PokemonCard from '../components/PokemonCard'
 import GameboyGraphic from '@/components/GameboyGraphic';
+import AuthForm from '@/components/AuthForm';
 
 type PokemonSummary = {
   name: string;
@@ -42,8 +43,8 @@ export default async function Home() {
       <div className="lg:w-1/2 h-screen lg:h-auto">
         <GameboyGraphic/>
       </div>
-      <div className="lg:w-1/2 bg-brand-dark">
-        {}
+      <div className="lg:w-1/2 h-screen flex bg-brand-black items-center justify-center p-8">
+        <AuthForm/>
       </div>
     </main>
   );
