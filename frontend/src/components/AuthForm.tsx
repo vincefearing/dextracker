@@ -1,59 +1,101 @@
+"use client";
+import { useState } from "react";
+
 // A helper component for the input fields to keep the main component clean.
 const FormInput = ({
   icon,
   placeholder,
+  type = "text"
 }: {
   icon: React.ReactNode;
   placeholder: string;
+  type?: string;
 }) => (
   <div className="relative flex items-center w-full group">
     <span className="absolute left-4 text-brand-grey group-focus-within:text-brand-light transition-colors duration-200">
       {icon}
     </span>
     <input
-      type={placeholder.toLowerCase()}
+      type={type}
       placeholder={placeholder}
-      className="w-full bg-brand-black text-brand-grey border border-brand-dark rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-blue-hl focus:text-brand-light transition-colors duration-200"
+      className="w-full bg-brand-black text-brand-grey border border-brand-dark rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-blue-hl focus:text-brand-light focus:placeholder-brand-light transition-colors duration-200"
     />
   </div>
 );
 
+// Render active button and underline
+const AuthTabButton = ({
+  label,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}) => (
+  <div className="relative">
+    <button
+      onClick={onClick}
+      className={`
+                transition-colors cursor-pointer
+                ${
+                  isActive
+                    ? "text-brand-light"
+                    : "text-brand-grey hover:text-brand-light transition-colors"
+                }
+            `}
+    >
+      {label}
+    </button>
+    {isActive && (
+      <div className="absolute -bottom-2 left-0 w-full h-1 bg-brand-red rounded-full"></div>
+    )}
+  </div>
+);
+
 export default function AuthForm() {
+  const [mode, setMode] = useState("register");
   return (
     // Main container for the form
     <div className="w-full max-w-sm flex flex-col items-center gap-12 text-brand-grey">
       {/* Login/Register Toggle */}
       <div className="flex items-center gap-8 text-xl font-medium">
-        <button className="text-brand-grey hover:text-brand-light transition-colors">
-          login
-        </button>
-        <div className="relative">
-          <button className="text-brand-light">register</button>
-          <div className="absolute -bottom-2 left-0 w-full h-1 bg-brand-red rounded-full"></div>
-        </div>
+        <AuthTabButton
+          label="login"
+          isActive={mode === "login"}
+          onClick={() => setMode("login")}
+        />
+        <AuthTabButton
+          label="register"
+          isActive={mode === "register"}
+          onClick={() => setMode("register")}
+        />
       </div>
 
       {/* Form Fields */}
       <form className="w-full flex flex-col items-center gap-10">
-        <FormInput
-          icon={
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          }
-          placeholder="Username"
-        />
+        {mode === "register" && (
+          <FormInput
+            icon={
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            }
+            placeholder="Username"
+            type="text"
+          />
+        )}
         <FormInput
           icon={
             <svg
@@ -72,6 +114,7 @@ export default function AuthForm() {
             </svg>
           }
           placeholder="Email"
+          type="email"
         />
         <FormInput
           icon={
@@ -91,12 +134,13 @@ export default function AuthForm() {
             </svg>
           }
           placeholder="Password"
+          type="password"
         />
         <button
           type="submit"
-          className="w-1/2 bg-brand-red text-brand-light font-bold rounded-full py-3 mt-4 shadow-[0_6px_0_rgb(159,28,46)] hover:shadow-[0_4px_0_rgb(159,28,46)] hover:translate-y-0.5 active:shadow-none active:translate-y-1 transition-all duration-150"
+          className="w-1/2 bg-brand-red text-brand-light font-bold rounded-full py-3 mt-4 shadow-[0_6px_0_rgb(159,28,46)] hover:shadow-[0_4px_0_rgb(159,28,46)] hover:translate-y-0.5 active:shadow-none active:translate-y-1 transition-all duration-150 cursor-pointer"
         >
-          Sign Up
+          {mode === "register" ? "Sign Up" : "Log In"}
         </button>
       </form>
 
@@ -108,7 +152,7 @@ export default function AuthForm() {
       </div>
 
       {/* Google Sign-in Button */}
-      <button className="w-full flex items-center justify-center gap-2 bg-brand-black text-brand-grey border border-brand-dark rounded-full py-3 hover:text-brand-grey-hl hover:bg-brand-black-hl  transition-colors group">
+      <button className="w-full flex items-center justify-center gap-2 bg-brand-black text-brand-grey border border-brand-dark rounded-full py-3 hover:text-brand-grey-hl hover:bg-brand-black-hl transition-colors group cursor-pointer">
         <svg
           width="20"
           height="20"
